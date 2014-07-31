@@ -58,9 +58,16 @@ def select(books):
     :param books: list of books
     """
     for book in books:
-        print('{0}. {1} {2} {3}'.format(book['id'], book['author'], book['title'], books['publisher'])),
+        print('{0}. {1} {2} {3}'.format(book['id'], book['author'], book['title'], book['publisher'])),
         print('{0} {1} {2} {3} {4}'.format(book['year'], book['pages'], book['lang'], book['size'], book['extension']))
-    choice = int(raw_input('Choose book: '))
+    while True:
+        try:
+            choice = int(raw_input('Choose book: '))
+            if choice <= 0 or choice > 25:
+                raise ValueError
+        except ValueError: print('Invalid choice. Try again.'); continue
+        except (KeyboardInterrupt, EOFError): print(''); sys.exit(0)
+        break
     return next((b for b in books if b['id'] == choice), None)
 
 def download(book):
