@@ -21,7 +21,7 @@ def _number_of_result_pages(numberofbooks, resultsperpage):
     return int(math.ceil(numberofbooks / float(resultsperpage)))
 
 def _next_page(term, numberofbooks):
-    for n in range(1, _number_of_result_pages(numberofbooks, 25) + 1):
+    for n in range(2, _number_of_result_pages(numberofbooks, 25) + 1):
         yield searchurl % (term, n)
 
 def search(term):
