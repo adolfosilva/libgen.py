@@ -24,6 +24,12 @@ def _next_page(term, numberofbooks):
     for n in range(2, _number_of_result_pages(numberofbooks, 25) + 1):
         yield searchurl % (term, n)
 
+def _range(start, stop, step):
+    return [(n, min(n+step, stop)) for n in range(start, stop, step)]
+
+def _parts(request, ranges):
+    return (request % (a,b) for a, b in ranges)
+
 def search(term):
     """
     Yields a result page for a given search term.
