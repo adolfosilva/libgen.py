@@ -21,21 +21,20 @@ def _number_of_result_pages(numberofbooks, resultsperpage):
     return int(math.ceil(numberofbooks / float(resultsperpage)))
 
 def _next_page(term, numberofbooks):
-    for n in range(2, _number_of_result_pages(numberofbooks, 25) + 1):
-        yield searchurl % (term, n)
+    return ((searchurl % (term, n)) for n in range(2, _number_of_result_pages(numberofbooks, 25) + 1))
 
 def _range(start, stop, step):
     return [(n, min(n+step, stop)) for n in range(start, stop, step)]
 
 def _parts(request, ranges):
-    return (request % (a,b) for a, b in ranges)
+    return ((request % (a,b)) for a, b in ranges)
 
 def search(term):
     """
-    Yields a result page for a given search term.
+    Yield result pages for a given search term.
 
     :param term: the search term as a str
-    :returns: a BeautifulSoup4 object representing a result page 
+    :returns: BeautifulSoup4 object representing a result page
     """
     if len(term) < 4:
         raise ValueError('Your search term must be at least 4 characters long.')
@@ -51,37 +50,67 @@ def search(term):
 #     print(data.find(text=re.compile("^\d+ books found"))
 #     # data.find_all(href=re.compile("book/index.php\?md5="))
 
-def select(resultpage):
+def select(books):
     """
-    Prints the books on a single search result page and
-    allows the user to choose which one to download.
+    Print the books on a single search result page and
+    allows the user to choose one to download.
 
-    :param books: list of 
+    :param books: list of books
     """
-    pass
+    for book in books:
+        print('{0}. {1} {2} {3}'.format(book['id'], book['author'], book['title'], books['publisher'])),
+        print('{0} {1} {2} {3} {4}'.format(book['year'], book['pages'], book['lang'], book['size'], book['extension']))
+    choice = int(raw_input('Choose book: '))
+    return next((b for b in books if b['id'] == choice), None)
 
 def download(book):
     """
-    Downloads a book from libgen to the current directory.
+    Download a book from libgen.org to the current directory.
 
-    :param book: an md5 hash of a book as a str
+    :param book: md5 hash of a book
     """
     r = urllib2.urlopen(downloadurl + book)
     filename = re.search('filename=\"(.+)\"', r.info()['Content-Disposition']).group(1)
     with open(filename, 'wb') as f:
-        meta = r.info()
-        file_size = int(meta.getheaders("Content-Length")[0])
-        print("Downloading: %s\nSize: %.2f MB" % (' - '.join(filename.split('-')[:2]), float(file_size) / 10**6))
+        filesize = int(r.info().getheaders("Content-Length")[0])
+        print("Downloading: %s\nSize: %.2f MB" % (' - '.join(filename.split('-')[:2]), float(filesize) / 10**6))
 
-        file_size_dl = 0
+        filesize_dl = 0
         block_sz = 1024
         while True:
             buf = r.read(block_sz)
             if not buffer:
                 break
-            file_size_dl += len(buf)
+            filesize_dl += len(buf)
             f.write(buf)
-            status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+            status = r"%10d  [%3.2f%%]" % (filesize_dl, filesize_dl * 100. / filesize)
+            status = status + chr(8)*(len(status)+1)
+            print status,
+
+def download2(book):
+    """
+    Download a book from libgen.org to the current directory.
+
+    :param book: a md5 hash of a book
+    """
+    blocksize = 1024 # bytes
+    req = urllib2.Request(downloadurl + book)
+    req.headers['Range'] = 'bytes=%s-%s' % (start, end)
+    parts = list(_parts('bytes=%s-%s', _range(0, filesize, blocksize)))
+    r = urllib2.urlopen(req)
+    filename = re.search('filename=\"(.+)\"', r.info()['Content-Disposition']).group(1)
+    with open(filename, 'wb') as f:
+        filesize = int(r.info().getheaders("Content-Length")[0])
+        print("Downloading: %s\nSize: %.2f MB" % (' - '.join(filename.split('-')[:2]), float(filesize) / 10**6))
+
+        filesize_dl = 0
+        while True:
+            buf = r.read(blocksize)
+            if not buffer:
+                break
+            filesize_dl += len(buf)
+            f.write(buf)
+            status = r"%10d  [%3.2f%%]" % (filesize_dl, filesize_dl * 100. / filesize)
             status = status + chr(8)*(len(status)+1)
             print status,
 
@@ -99,8 +128,8 @@ if __name__ == '__main__':
     #     reduce(extractaccumulate, search(options.search))
     #     reduce(lambda a, b: extract(a) + extract(b), search(options.search)) 
     # extract(search(sys.argv[1]))
-    # download("6738829E0C619C853DFE3507C80BCE98")
-    for page in search(args.search):
-        print page.prettify()
+    download2("6738829E0C619C853DFE3507C80BCE98")
+    #for page in search(args.search):
+    #    print page.prettify()
 
     # 'Downloaded X MB in Y seconds.'
