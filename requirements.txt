@@ -1,0 +1,2 @@
+beautifulsoup4==4.3.2
+tabulate==0.7.2
