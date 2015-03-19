@@ -1,6 +1,6 @@
 # libgen.py
 
-A short and sweet script to download books from libgen.org.
+A short and sweet script to download books from libgen.in.
 
 ### Usage
 

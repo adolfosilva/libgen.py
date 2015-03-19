@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-"""A short and sweet script to download books from libgen.org
+"""A short and sweet script to download books from libgen.in
 
-A short and sweet script to download books from libgen.org."""
+A short and sweet script to download books from libgen.in."""
 
 import re
 import sys
@@ -15,8 +15,8 @@ import itertools
 import multiprocessing
 from bs4 import BeautifulSoup
 
-searchurl = 'http://libgen.org/search.php?&req=%s&view=simple&column=def&sort=title&sortmode=ASC&page=%d'
-downloadurl = 'http://libgen.org/get.php?md5='
+searchurl = 'http://libgen.in/search.php?&req=%s&view=simple&column=def&sort=title&sortmode=ASC&page=%d'
+downloadurl = 'http://libgen.in/get.php?md5='
 
 # make it do parallel multipart download
 # http://stackoverflow.com/questions/1798879/download-file-using-partial-download-http
@@ -97,7 +97,7 @@ def select(books):
 
 def download(book):
     """
-    Download a book from libgen.org to the current directory.
+    Download a book from libgen.in to the current directory.
 
     :param book: md5 hash of a book
     """
