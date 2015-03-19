@@ -15,6 +15,8 @@ import itertools
 import multiprocessing
 from bs4 import BeautifulSoup
 
+mirrors = ['libgen.in', 'libgen.org', 'gen.lib.rus.ec']
+
 searchurl = 'http://libgen.in/search.php?&req=%s&view=simple&column=def&sort=title&sortmode=ASC&page=%d'
 downloadurl = 'http://libgen.in/get.php?md5='
 
