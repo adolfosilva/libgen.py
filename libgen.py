@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """A short and sweet script to download books from libgen.in
 
@@ -8,7 +8,7 @@ import re
 import sys
 import copy
 import math
-import urllib2
+import urllib
 import argparse
 import tabulate
 import itertools
@@ -44,11 +44,11 @@ def search(term):
     """
     if len(term) < 4:
         raise ValueError('Your search term must be at least 4 characters long.')
-    firstpage = BeautifulSoup(urllib2.urlopen(searchurl % (term, 1)))
+    firstpage = BeautifulSoup(urllib.urlopen(searchurl % (term, 1)))
     numberofbooks = int(re.search('\d+', firstpage.find(text=re.compile('^\d+ books found'))).group())
     print(('%d books found' % numberofbooks))
     for page in _next_page(term, numberofbooks):
-        yield BeautifulSoup(urllib2.urlopen(page))
+        yield BeautifulSoup(urllib.urlopen(page))
 
 def extract(page):
     """Extract all the books info in a given result page.
@@ -106,10 +106,10 @@ def download(book):
     blocksize = 1024 # in bytes
     filename = book['title'] + '.' + book['extension']
     bookurl = downloadurl + book['hash']
-    filesize = int(urllib2.urlopen(bookurl).info().getheaders("Content-Length")[0]) # in bytes
-    req = urllib2.Request(bookurl)
+    filesize = int(urllib.urlopen(bookurl).info().getheaders("Content-Length")[0]) # in bytes
+    req = urllib.Request(bookurl)
     parts = _range(0, filesize, blocksize)
-    req = urllib2.Request(downloadurl + book['hash'])
+    req = urllib.Request(downloadurl + book['hash'])
     requests = list(itertools.repeat(req, len(parts))) # make len(parts) request copies
     reqs = []
     for r, rng in itertools.izip(requests, parts):
