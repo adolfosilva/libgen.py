@@ -8,8 +8,8 @@ Usage
 
 .. code:: shell
 
-    $ python3 libgen.py -h
-    usage: libgen.py [-h] -s SEARCH [-y YEAR] [-t EXTENSION]
+    $ libgen -h
+    usage: libgen [-h] -s SEARCH [-y YEAR] [-t EXTENSION]
 
     Read more, kids.
 
