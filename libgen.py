@@ -1,147 +1,244 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """A short and sweet script to download books from libgen.in
 
 A short and sweet script to download books from libgen.in."""
 
+import abc
+import argparse
+import itertools
 import re
 import sys
-import copy
-import math
-import urllib
-import argparse
+from abc import ABC
+from typing import Generator, List
+
+import bs4
+import requests
 import tabulate
-import itertools
-import multiprocessing
 from bs4 import BeautifulSoup
+from requests.exceptions import Timeout
 
-mirrors = ['libgen.in', 'libgen.org', 'gen.lib.rus.ec']
 
-searchurl = 'http://libgen.in/search.php?&req=%s&view=simple&column=def&sort=title&sortmode=ASC&page=%d'
-downloadurl = 'http://libgen.in/get.php?md5='
+class Book(object):
+    def __init__(self, **kwargs) -> None:
+        for (field, value) in kwargs.items():
+            setattr(self, field, value)
 
-# make it do parallel multipart download
-# http://stackoverflow.com/questions/1798879/download-file-using-partial-download-http
+    def _values(self) -> List[str]:
+        fields = self._fields()
+        return [getattr(self, f) for f in fields]
 
-def _number_of_result_pages(numberofbooks, resultsperpage):
-    return int(math.ceil(numberofbooks / float(resultsperpage)))
+    def _fields(self) -> List[str]:
+        return sorted([f for f in self.__dir__() if not f.startswith('_')])
 
-def _next_page(term, numberofbooks):
-    return ((searchurl % (term, n)) for n in range(2, _number_of_result_pages(numberofbooks, 25) + 1))
+    def __str__(self) -> str:
+        fields = []
+        for field in self._fields():
+            value = getattr(self, field)
+            f = str(field).capitalize() + ": " + str(value)
+            fields.append(f)
+        return ", ".join(fields)
 
-def _range(start, stop, step):
-    return [(n, min(n+step, stop)) for n in range(start, stop, step)]
+class MirrorBookDownloader(ABC):
+    def __init__(self, url: str, timeout: int = 10) -> None:
+        self.url = url
+        self.timeout = timeout # seconds
 
-def _parts(request, ranges):
-    return ((request % (a,b)) for a, b in ranges)
+    @abc.abstractmethod
+    def download_book(self):
+        raise NotImplementedError
 
-def search(term):
-    """
-    Yield result pages for a given search term.
+class LibgenIoDownloader(MirrorBookDownloader):
+    def __init__(self, url: str) -> None:
+        super().__init__(url)
 
-    :param term: the search term as a str
-    :returns: BeautifulSoup4 object representing a result page
-    """
-    if len(term) < 4:
-        raise ValueError('Your search term must be at least 4 characters long.')
-    firstpage = BeautifulSoup(urllib.urlopen(searchurl % (term, 1)))
-    numberofbooks = int(re.search('\d+', firstpage.find(text=re.compile('^\d+ books found'))).group())
-    print(('%d books found' % numberofbooks))
-    for page in _next_page(term, numberofbooks):
-        yield BeautifulSoup(urllib.urlopen(page))
-
-def extract(page):
-    """Extract all the books info in a given result page.
-
-    :param page: result page as an BeautifulSoup4 object
-    :returns: list of books as a list of dicts
-    """
-    # data.find_all(href=re.compile("book/index.php\?md5="))
-    # for i, data in enumerate():
-    # book['id'] = i
-    # book['author'] = None
-    # book['title'] = None
-    # book['publisher'] = None
-    # book['year'] = None
-    # book['pages'] = None
-    # book['lang'] = None
-    # book['size'] = None
-    # book['extension'] = None
-    # book['hash'] = None
-    pass
-
-def select(books):
-    """
-    Print the books info on a single search result page
-    and allows the user to choose one to download.
-
-    :param books: list of books
-    :returns: a book as a dict or None if not found
-    """
-    headers = ['ID', 'Author(s)', 'Title', 'Publisher', 'Year', 'Pages', 'Language', 'Size', 'Extension']
-    print(tabulate.tabulate([b.values() for b in books], headers))
-    # for book in books:
-    #    print('ID:{0} {1} - {2} {3}'.format(book['id'], book['author'], book['title'], book['publisher'])),
-    #    print('{0} {1} {2} {3} {4}'.format(book['year'], book['pages'], book['lang'], book['size'], book['extension']))
-    while True:
-        try:
-            choice = int(raw_input('Choose book: '))
-            if choice <= 0 or choice > 25:
-                raise ValueError
-        except ValueError: print('Invalid choice. Try again.'); continue
-        except (KeyboardInterrupt, EOFError): print(''); sys.exit(0)
-        break
-    book = next((b for b in books if b['id'] == choice), None)
-    if not book:
-        print('No book with this ID.')
-        sys.exit(1)
-    return book
-
-def download(book):
-    """
-    Download a book from libgen.in to the current directory.
-
-    :param book: md5 hash of a book
-    """
-    blocksize = 1024 # in bytes
-    filename = book['title'] + '.' + book['extension']
-    bookurl = downloadurl + book['hash']
-    filesize = int(urllib.urlopen(bookurl).info().getheaders("Content-Length")[0]) # in bytes
-    req = urllib.Request(bookurl)
-    parts = _range(0, filesize, blocksize)
-    req = urllib.Request(downloadurl + book['hash'])
-    requests = list(itertools.repeat(req, len(parts))) # make len(parts) request copies
-    reqs = []
-    for r, rng in itertools.izip(requests, parts):
-        reqs.append(r.add_header('Range', 'bytes={0}-{1}'.format(rng[0], rng[1])))
-    for r in reqs: print(r.headers)
-    return
-    #requests = [r.add_header('Range', 'bytes={0}-{1}'.format(rng[0], rng[1])) for r, rng in itertools.izip(requests, parts)] # change headers
-
-    def _download_and_save(req):
+    def download_book(self):
+        r = get(self.url, self.timeout)
+        html = BeautifulSoup(r.text, 'lxml')
+        download_url = html.find('a', href=True, text='GET')['href']
+        p = get(download_url, self.timeout, stream=True)
+        filename = self.get_filename(p.headers)
+        print('Downloading \'{}\''.format(filename))
         with open(filename, 'wb') as f:
-            f.seek(byte)
-            f.write(req.get_data())
+            for chunk in p.iter_content(chunk_size=1024):
+                if chunk: f.write(chunk)
+        
+    def get_filename(self, headers):
+        r = re.search('filename="(.+)"', headers['Content-Disposition'])
+        return r.group(1)
 
-    p = multiprocessing.Pool(processes=3)
-    parts = p.map(_download_and_save, requests)
+def get(url, timeout, stream=False):
+    try:
+        return requests.get(url, stream=stream, timeout=timeout)
+    except Timeout:
+        print('Error: Timeout at {} seconds'.format(timeout))
+        sys.exit(1)
 
-    # filename = re.search('filename=\"(.+)\"', r.info()['Content-Disposition']).group(1)
+class Mirror(ABC):
+    def __init__(self, search_url: str) -> None:
+        self.search_url = search_url
+
+    def run(self):
+        for result_page in self.search(self.search_term):
+            books = self.extract(result_page)
+            selected = self.select(books)
+            if selected:
+                self.download(selected)
+                # TODO: 'Downloaded X MB in Y seconds.'
+                break
+
+    def search(self, search_term: str) -> Generator[bs4.BeautifulSoup, None, None]:
+        """
+        Yield result pages for a given search term.
+
+        :param term: the search term as a str
+        :returns: BeautifulSoup4 object representing a result page
+        """
+        if len(search_term) < 3:
+            raise ValueError('Your search term must be at least 3 characters long.')
+        for page_url in self.next_page_url():
+            print("Next results page: {}".format(page_url))
+            r = requests.get(page_url)
+            if r.status_code == 200:
+                yield BeautifulSoup(r.text, 'lxml')
+
+    @abc.abstractmethod
+    def next_page_url(self) -> Generator[str, None, None]:
+        """Yields the new results page."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def extract(self, page) -> List[Book]:
+        """Extract all the books info in a given result page.
+
+        :param page: result page as an BeautifulSoup4 object
+        :returns: list of books
+        """
+        raise NotImplementedError
+
+    def select(self, books: List[Book]) -> Book:
+        """
+        Print the books info on a single search result page
+        and allows the user to choose one to download.
+
+        :param books: list of books
+        :returns: a book as a dict or None if not found
+        """
+        headers = books[0]._fields()
+        print(tabulate.tabulate([b._values() for b in books], headers, 'fancy_grid'))
+        while True:
+            try:
+                choice = input('Choose book by ID: ')
+                book = [b for b in books if b.id == choice]
+                if not book:
+                    raise ValueError
+                else:
+                    return book[0]
+            except ValueError: print('Invalid choice. Try again.'); continue
+            except (KeyboardInterrupt, EOFError): print(''); sys.exit(0)
+            break
+
+    # TODO: make it do parallel multipart download
+    # http://stackoverflow.com/questions/1798879/download-file-using-partial-download-http
+    def download(self, book):
+        """
+        Download a book from the mirror to the current directory.
+
+        :param book: md5 hash of a book
+        """
+        for (_, mirror) in book.mirrors.items():
+            mirror.download_book()
+
+
+class GenLibRusEc(Mirror):
+    search_url = "http://gen.lib.rus.ec/search.php?req="
+
+    def __init__(self, search_term: str) -> None:
+        super().__init__(self.search_url)
+        self.search_term = search_term
+
+    def next_page_url(self) -> Generator[str, None, None]:
+        """Yields the new results page."""
+        for pn in itertools.count(1):
+            yield "{}{}&page={}".format(self.search_url, self.search_term, str(pn))
+
+    def extract(self, page):
+        """Extract all the books info in a given result page.
+
+        :param page: result page as an BeautifulSoup4 object
+        :returns: list of books as a list of dicts
+        """
+        r = re.compile("(.+)(\[(.+)\])?(.*)")
+        trs = page.findAll('table')[2].findAll('tr')
+        books = []
+        for tr in trs[1:]:
+            td = tr.findAll('td')
+            fields = {}
+            fields['id'] = td[0].text
+            fields['authors'] = td[1].text.strip()
+            t = r.search(td[2].text.strip())
+            if t is None:
+                fields['title'] = td[2].text.strip()
+            else:
+                fields['title'] = t.group(1).strip() 
+                fields['edition'] = t.group(2)
+                fields['isbn'] = t.group(3)
+            fields['publisher'] = td[3].text
+            fields['year'] = td[4].text
+            fields['pages'] = td[5].text 
+            fields['lang'] = td[6].text
+            fields['size'] = td[7].text
+            fields['extension'] = td[8].text
+            fields['mirrors'] = {
+                    'libgen.io': LibgenIoDownloader(td[9].findAll('a', href=True)[0]['href'])
+                    #'libgen.pw': td[10].findAll('a', href=True)[0]['href'],
+                    #'b-ok.org': td[11].findAll('a', href=True)[0]['href'],
+                    #'bookfi.net': td[12].findAll('a', href=True)[0]['href']
+            }
+            books.append(Book(**fields))
+        return books
+
+class LibGenPw(Mirror):
+    search_url = "http://gen.lib.rus.ec/search.php?req="
+
+    def __init__(self, search_term: str) -> None:
+        super().__init__(self.search_url)
+        self.search_term = search_term
+
+    def extract(self, page):
+        pass
+
+MIRRORS = {'http://gen.lib.rus.ec': GenLibRusEc}
+           # 'https://libgen.pw': LibGenPw}
+
+class NoAvailableMirrorError(Exception):
+    """No mirrors are available to process request."""
+    def __init__(self) -> None:
+        msg = "No mirrors are available to process the request at this time."
+        Exception.__init__(self, msg)
+
+class MirrorFinder(object):
+    def __init__(self) -> None:
+        self.mirrors = MIRRORS
+
+    def run(self, search_term: str):
+        mirror = self.find_active_mirror()
+        if mirror is None:
+            raise NoAvailableMirrorError
+        mirror(search_term).run()
+
+    def find_active_mirror(self):
+        for (homepage, mirror) in self.mirrors.items():
+            r = requests.get(homepage)
+            if r.status_code == 200:
+                return mirror
+        return None
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Read more, kids.')
     parser.add_argument('-s', '--search', dest='search', required=True, help='search term')
-    parser.add_argument('-y', '--year', dest='year', type=int, help='year of publication')
-    parser.add_argument('-t', '--type', dest='extension', default='pdf', help='file extension')
     args = parser.parse_args()
 
-    """
-    for result_page in search(args.search):
-        selected = select(extract(result_page))
-        if selected:
-            download(selected['hash']
-    """
-
-    download("6738829E0C619C853DFE3507C80BCE98")
-
-    # 'Downloaded X MB in Y seconds.'
+    MirrorFinder().run(args.search)
