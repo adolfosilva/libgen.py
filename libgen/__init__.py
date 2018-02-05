@@ -1,3 +1,3 @@
 all = ['libgen']
 
-from libgen import *
+from .libgen import *
