@@ -6,7 +6,6 @@
 A short and sweet script to download books from libgen.in."""
 
 import abc
-import argparse
 import itertools
 import re
 import sys
@@ -235,10 +234,3 @@ class MirrorFinder(object):
                 return mirror
         return None
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Read more, kids.')
-    parser.add_argument('-s', '--search', dest='search', required=True, help='search term')
-    args = parser.parse_args()
-
-    MirrorFinder().run(args.search)
