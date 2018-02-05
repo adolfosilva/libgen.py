@@ -1,4 +1,4 @@
-# libgen.py
+# libgen.py [![Build Status](https://travis-ci.org/adolfosilva/libgen.py.svg?branch=master)](https://travis-ci.org/adolfosilva/libgen.py) [![License: MIT](https://img.shields.io/badge/License-MIT-orange.svg)](https://opensource.org/licenses/MIT)
 
 A short and sweet script to download books from gen.lib.rus.ec.
 
@@ -21,7 +21,7 @@ optional arguments:
 Install all the dependencies with:
 
 ```bash
-$ pip install -r requirements.txt
+$ pip3 install -r requirements.txt
 ```
 
 ### License
