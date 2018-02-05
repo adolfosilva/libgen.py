@@ -11,6 +11,7 @@ import re
 import sys
 from abc import ABC
 from typing import Generator, List
+import argparse
 
 import bs4
 import requests
@@ -234,3 +235,12 @@ class MirrorFinder(object):
                 return mirror
         return None
 
+def main():
+    parser = argparse.ArgumentParser(description='Read more, kids.')
+    parser.add_argument('-s', '--search', dest='search', required=True, help='search term')
+    args = parser.parse_args()
+    MirrorFinder().run(args.search)
+
+
+if __name__ == '__main__':
+    main()

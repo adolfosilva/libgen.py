@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name='libgen',
@@ -8,8 +8,10 @@ setup(
     author_email='code@adolfosilva.org',
     url='https://github.com/adolfosilva/libgen.py',
     description='A script to download books from gen.lib.rus.ec',
-    package_dir={'': 'libgen'},
-    packages=find_packages('libgen'),
-    scripts=['bin/libgen.py'],
-    tests_requires=['pytest']
+    tests_requires=['pytest'],
+    py_modules=['libgen'],
+    entry_points={
+        'console_scripts': ['libgen=libgen:main'],
+    },
+    install_requires=['beautifulsoup4', 'tabulate', 'requests']
 )
