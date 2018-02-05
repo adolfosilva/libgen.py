@@ -5,7 +5,7 @@ A short and sweet script to download books from libgen.in.
 ### Usage
 
 ```shell
-$ python libgen.py -h
+$ python3 libgen.py -h
 usage: libgen.py [-h] -s SEARCH [-y YEAR] [-t EXTENSION]
 
 Read more, kids.
@@ -14,9 +14,6 @@ optional arguments:
   -h, --help            show this help message and exit
   -s SEARCH, --search SEARCH
                         search term
-  -y YEAR, --year YEAR  year of publication
-  -t EXTENSION, --type EXTENSION
-                        file extension
 ```
 
 ### Dependencies
