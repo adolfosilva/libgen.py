@@ -1,7 +1,17 @@
-libgen.py |Build Status| |License: MIT|
-=======================================
+libgen.py |PyPy Package| |Build Status| |License: MIT|
+======================================================
 
 A short and sweet script to download books from gen.lib.rus.ec.
+
+Installation
+~~~~~~~~~~~~
+
+To install just run:
+
+.. code:: shell
+
+    $ pip3 install libgen.py
+
 
 Usage
 ~~~~~
@@ -32,6 +42,8 @@ License
 
 Distributed under the MIT license. See LICENSE for details.
 
+.. |PyPy Package| image:: https://badge.fury.io/py/libgen.py.svg
+   :target: https://badge.fury.io/py/libgen.py
 .. |Build Status| image:: https://travis-ci.org/adolfosilva/libgen.py.svg?branch=master
    :target: https://travis-ci.org/adolfosilva/libgen.py
 .. |License: MIT| image:: https://img.shields.io/badge/License-MIT-orange.svg
