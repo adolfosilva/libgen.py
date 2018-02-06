@@ -15,6 +15,7 @@ setup(
     include_package_data=True,  # include files listed in MANIFEST.in
     tests_requires=['pytest'],
     py_modules=['libgen'],
+    python_requires='~=3.5',
     entry_points={
         'console_scripts': ['libgen=libgen:main'],
     },
