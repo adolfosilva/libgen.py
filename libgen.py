@@ -80,13 +80,19 @@ class Mirror(ABC):
         self.search_url = search_url
 
     def run(self):
-        for result_page in self.search(self.search_term):
-            books = self.extract(result_page)
-            selected = self.select(books)
-            if selected:
-                self.download(selected)
-                # TODO: 'Downloaded X MB in Y seconds.'
-                break
+        try:
+            for result_page in self.search(self.search_term):
+                books = self.extract(result_page)
+                if not books:
+                    raise NoResults
+                selected = self.select(books)
+                if selected:
+                    self.download(selected)
+                    # TODO: 'Downloaded X MB in Y seconds.'
+                    break
+        except NoResults as e:
+            print(e)
+            sys.exit(1)
 
     def search(self, search_term: str) -> Generator[bs4.BeautifulSoup, None, None]:
         """
@@ -211,6 +217,12 @@ class LibGenPw(Mirror):
 
 MIRRORS = {'http://gen.lib.rus.ec': GenLibRusEc}
            # 'https://libgen.pw': LibGenPw}
+
+class NoResults(Exception):
+    """Search didn't return any result."""
+    def __init__(self) -> None:
+        msg = "Search didn't return any result."
+        Exception.__init__(self, msg)
 
 class NoAvailableMirrorError(Exception):
     """No mirrors are available to process request."""
