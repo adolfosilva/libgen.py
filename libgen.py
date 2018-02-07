@@ -11,6 +11,8 @@ import re
 import sys
 from abc import ABC
 from typing import Generator, List
+import random
+import string
 import argparse
 
 import bs4
@@ -18,6 +20,11 @@ import requests
 import tabulate
 from bs4 import BeautifulSoup
 from requests.exceptions import Timeout
+
+def random_string(length: int, character_set: str = string.ascii_lowercase) -> str:
+    """Returns a random string of length 'length' consisting of characters from 'character_set'."""
+    letters = [random.choice(character_set) for _ in range(length)]
+    return "".join(letters)
 
 
 class Book(object):
