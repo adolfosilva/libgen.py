@@ -39,9 +39,9 @@ class Publication(object):
         if title is None:
             random_filename = random_string(15)
             return f'{random_filename}.{ext}'
-        authors = self.attrs.get('authors')  # optional
         year = self.attrs.get('year')  # optional
         if year:
+            authors = self.attrs.get('authors')  # optional
             if authors:
                 return f'{title} ({year}) - {authors}.{ext}'
             else:
@@ -53,4 +53,4 @@ class Publication(object):
         return f'{self.__class__.__name__}({attrs})'
 
     def __len__(self) -> int:
-        return len(self.fields)
+        return len(self.attrs)
