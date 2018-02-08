@@ -34,7 +34,7 @@ class MirrorDownloader(ABC):
         save_file(filename, data)
 
     @abc.abstractmethod
-    def get_download_url(self):
+    def get_download_url(self, html) -> Optional[str]:
         """Returns the URL from where to download the
         file or None if it can't find the URL."""
         raise NotImplementedError
