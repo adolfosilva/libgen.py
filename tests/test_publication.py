@@ -9,16 +9,16 @@ def test_pub_initialization():
     assert p.title is None
 
 
-def test_pub_attributes():
+def test_pub_fields():
     attrs = {'id': 5, 'authors': 'Fernando Pessoa'}
     p = Publication(attrs)
-    assert p.attributes == attrs.keys()
+    assert p.fields == attrs.keys()
 
 
 def test_pub_values():
     attrs = {'id': 5, 'authors': 'Fernando Pessoa'}
     p = Publication(attrs)
-    assert list(p.values()) == list(attrs.values())
+    assert list(p.values) == list(attrs.values())
 
 
 def test_pub_repr():

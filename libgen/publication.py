@@ -1,6 +1,6 @@
 from libgen.utils import random_string
 
-from typing import List, Dict, Optional, Any
+from typing import Dict, Optional, Any
 
 
 class Publication(object):
@@ -21,8 +21,13 @@ class Publication(object):
 
     @property
     def attributes(self):
+        return self.attrs
+
+    @property
+    def fields(self):
         return self.attrs.keys()
 
+    @property
     def values(self):
         """Returns a list containing the values of every field in the object."""
         return self.attrs.values()
