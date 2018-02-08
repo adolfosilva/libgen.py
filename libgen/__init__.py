@@ -1,3 +1,8 @@
-"""A short and sweet script to download books from 'gen.lib.rus.ec'
+# -*- coding: utf-8 -*-
 
-A short and sweet script to download books from 'gen.lib.rus.ec'"""
+"""
+libgen
+~~~~~~
+
+Download books from 'gen.lib.rus.ec', 'libgen.io',
+'libgen.pw', 'b-ok.org' and 'bookfi.net'."""

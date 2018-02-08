@@ -1,7 +1,7 @@
 libgen.py |PyPy Package| |Build Status| |License: MIT|
 ======================================================
 
-A short and sweet script to download books from gen.lib.rus.ec.
+A script to download books from gen.lib.rus.ec, libgen.io, libgen.pw, b-ok.org and bookfi.net.
 
 Installation
 ~~~~~~~~~~~~
