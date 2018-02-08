@@ -7,7 +7,7 @@ from abc import ABC
 import re
 import sys
 import itertools
-from typing import Generator, List, Dict, Any
+from typing import Generator, List, Dict, Optional, Any
 
 import requests
 from requests.exceptions import Timeout
@@ -21,9 +21,10 @@ class Mirror(ABC):
         self.search_url = search_url
 
     @staticmethod
-    def get_href(cell):
-        # TODO: safe [0] please
-        return cell.findAll('a', href=True)[0]['href']
+    def get_href(cell) -> Optional[str]:
+        links = cell.find_all('a', href=True)
+        first = next(iter(links), None)
+        return None if first is None else first.get('href')
 
     def run(self):
         try:
@@ -141,10 +142,10 @@ class GenLibRusEc(Mirror):
         :param page: result page as an BeautifulSoup4 object
         :returns: list of Publication
         """
-        rows = page.findAll('table')[2].findAll('tr')
+        rows = page.find_all('table')[2].find_all('tr')
         results = []
         for row in rows[1:]:
-            cells = row.findAll('td')
+            cells = row.find_all('td')
             attrs = self.extract_attributes(cells)
             results.append(Publication(attrs))
         return results
@@ -167,11 +168,13 @@ class GenLibRusEc(Mirror):
         attrs['lang'] = cells[6].text
         attrs['size'] = cells[7].text
         attrs['extension'] = cells[8].text
-        # TODO: refactor (eliminate duplication - cells[x]...)
+
         libgen_io_url = Mirror.get_href(cells[9])
         libgen_pw_url = Mirror.get_href(cells[10])
         # bok_org_url = Mirror.get_href(cells[11])
         # bookfi_net_url = Mirror.get_href(cells[12])
+
+        # TODO: each of these _url can be None
         attrs['mirrors'] = {
                 'libgen.io': downloaders.LibgenIoDownloader(libgen_io_url),
                 'libgen.pw': downloaders.LibgenPwDownloader(libgen_pw_url),
