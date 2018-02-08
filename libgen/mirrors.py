@@ -6,8 +6,9 @@ import abc
 from abc import ABC
 import re
 import sys
+import copy
 import itertools
-from typing import Generator, List, Dict, Optional, Any
+from typing import Generator, Tuple, List, Dict, Optional, Any
 
 import requests
 from requests.exceptions import Timeout
@@ -25,6 +26,23 @@ class Mirror(ABC):
         links = cell.find_all('a', href=True)
         first = next(iter(links), None)
         return None if first is None else first.get('href')
+
+    @staticmethod
+    def get_headers_values(publications: List[Publication]) -> Tuple[List[str], List[List[Any]]]:
+        # headers should not include 'mirrors'
+        headers = set()
+        values = []
+        for p in publications:
+            # we deep copy the publication's attributes because
+            # we need to remove the key 'mirrors' from the attributes
+            # and that's a destructive operation, but we don't want to
+            # change the publication, we really only want a list of
+            # attribute names
+            attrs = copy.deepcopy(p.attributes)
+            attrs.pop('mirrors', None)
+            headers.update(set(attrs))  # set of keys from attrs
+            values.append(list(attrs.values()))
+        return (list(headers), values)
 
     def run(self):
         try:
@@ -76,11 +94,7 @@ class Mirror(ABC):
         :param publications: list of Publication
         :returns: a Publication
         """
-        # TODO: headers should be a sum of all the fields from
-        # all the publications
-        # TODO: headers should not include 'mirrors'
-        headers = publications[0].attributes
-        values = [p.values() for p in publications]
+        headers, values = Mirror.get_headers_values(publications)
         print(tabulate.tabulate(values, headers, 'fancy_grid'))
         while True:
             try:
