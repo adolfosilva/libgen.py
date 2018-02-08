@@ -28,6 +28,7 @@ class Mirror(ABC):
         return None if first is None else first.get('href')
 
     @staticmethod
+    # @ensure('length of each value list in values is the same has the number of header values', lambda r: all(map(lambda x: len(x) == len(r[0]), r[1])))
     def get_headers_values(publications: List[Publication]) -> Tuple[List[str], List[List[Any]]]:
         # headers should not include 'mirrors'
         headers = set()
@@ -135,7 +136,7 @@ class Mirror(ABC):
                 print(traceback.format_exc())
                 print("Trying a different mirror.")
                 continue
-        print("Failed to download publications.")
+            print("Failed to download publications.")
 
 
 class GenLibRusEc(Mirror):
@@ -185,15 +186,15 @@ class GenLibRusEc(Mirror):
 
         libgen_io_url = Mirror.get_href(cells[9])
         libgen_pw_url = Mirror.get_href(cells[10])
-        # bok_org_url = Mirror.get_href(cells[11])
-        # bookfi_net_url = Mirror.get_href(cells[12])
+        bok_org_url = Mirror.get_href(cells[11])
+        bookfi_net_url = Mirror.get_href(cells[12])
 
         # TODO: each of these _url can be None
         attrs['mirrors'] = {
                 'libgen.io': downloaders.LibgenIoDownloader(libgen_io_url),
                 'libgen.pw': downloaders.LibgenPwDownloader(libgen_pw_url),
-                # 'b-ok.org': downloaders.BOkOrgDownloader(bok_org_url),
-                # 'bookfi.net': downloaders.BookFiNetDownloader(bookfi_net_url)
+                'b-ok.org': downloaders.BOkOrgDownloader(bok_org_url),
+                'bookfi.net': downloaders.BookFiNetDownloader(bookfi_net_url)
         }
         return attrs
 
@@ -206,7 +207,8 @@ class LibGenPw(Mirror):
         self.search_term = search_term
 
     def extract(self, page):
-        pass
+        # TODO: implement
+        raise NotImplementedError
 
 
 MIRRORS = {'http://gen.lib.rus.ec': GenLibRusEc,

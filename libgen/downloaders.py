@@ -47,7 +47,7 @@ class LibgenIoDownloader(MirrorDownloader):
 
     def get_download_url(self, html) -> Optional[str]:
         a = html.find('a', href=True, text='GET')
-        return None if a is None else a['href']
+        return None if a is None else a.get('href')
 
 
 class LibgenPwDownloader(MirrorDownloader):
@@ -63,6 +63,26 @@ class LibgenPwDownloader(MirrorDownloader):
         if a is None:
             return None
         return f"https://libgen.pw{a['href']}"
+
+
+class BOkOrgDownloader(MirrorDownloader):
+    """MirrorDownloader for 'b-ok.org'."""
+    def __init__(self, url: str) -> None:
+        super().__init__(url)
+
+    def get_download_url(self, html) -> Optional[str]:
+        a = html.find('a', class_='ddownload', href=True)
+        return None if a is None else a.get('href')
+
+
+class BookFiNetDownloader(MirrorDownloader):
+    """MirrorDownloader for 'bookfi.net'."""
+    def __init__(self, url: str) -> None:
+        super().__init__(url)
+
+    def get_download_url(self, html) -> Optional[str]:
+        a = html.find('a', class_='ddownload', href=True)
+        return None if a is None else a.get('href')
 
 
 def get(url: str, timeout: int, stream: bool = False):
