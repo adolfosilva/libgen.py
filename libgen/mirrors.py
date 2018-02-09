@@ -1,20 +1,20 @@
-from libgen.publication import Publication
-from libgen.exceptions import NoResults, CouldntFindDownloadUrl
-from libgen import downloaders
-
 import abc
-from abc import ABC
-import re
-import sys
 import copy
 import itertools
-from typing import Generator, Tuple, List, Dict, Optional, Any
+import re
+import sys
+from abc import ABC
+from typing import Any, Dict, Generator, List, Optional, Tuple
 
-import requests
-from requests.exceptions import Timeout
-import tabulate
 import bs4
+import requests
+import tabulate
 from bs4 import BeautifulSoup
+from requests.exceptions import Timeout
+
+from . import downloaders
+from .exceptions import CouldntFindDownloadUrl, NoResults
+from .publication import Publication
 
 
 class Mirror(ABC):

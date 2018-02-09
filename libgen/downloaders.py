@@ -1,13 +1,13 @@
-from libgen.utils import random_string
-from libgen.exceptions import CouldntFindDownloadUrl
-
 import abc
-from abc import ABC
 import os.path
+from abc import ABC
 from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
+
+from .exceptions import CouldntFindDownloadUrl
+from .utils import random_string
 
 
 class MirrorDownloader(ABC):

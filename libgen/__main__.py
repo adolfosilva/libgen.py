@@ -1,9 +1,9 @@
-from libgen.exceptions import NoAvailableMirror
-from libgen.mirrors import MIRRORS
-
 import argparse
 
 import requests
+
+from .exceptions import NoAvailableMirror
+from .mirrors import MIRRORS
 
 
 class MirrorFinder(object):

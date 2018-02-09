@@ -1,6 +1,6 @@
-from libgen.utils import random_string
+from typing import Any, Dict, Optional
 
-from typing import Dict, Optional, Any
+from .utils import random_string
 
 
 class Publication(object):
