@@ -96,6 +96,8 @@ def get(url: str, timeout: int, stream: bool = False):
 
 def save_file(filename: str, data: requests.models.Response):
     """Saves a file to the current directory."""
+    valid_chars = '-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    filename = ''.join(c for c in filename if c in valid_chars)
     try:
         with open(filename, 'wb') as f:
             for chunk in data.iter_content(chunk_size=1024):
