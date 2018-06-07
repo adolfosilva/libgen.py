@@ -18,6 +18,7 @@ from .publication import Publication
 
 
 class Mirror(ABC):
+
     def __init__(self, search_url: str) -> None:
         self.search_url = search_url
 
@@ -47,10 +48,7 @@ class Mirror(ABC):
 
     def run(self):
         try:
-            for result_page in self.search(self.search_term):
-                publications = self.extract(result_page)
-                if not publications:
-                    raise NoResults
+            for publications in self.search():
                 selected = self.select(publications)
                 if selected:
                     self.download(selected)
@@ -59,23 +57,30 @@ class Mirror(ABC):
         except NoResults as e:
             print(e)
 
-    def search(self, search_term: str) -> Generator[bs4.BeautifulSoup, None, None]:
+    def search(self, start_at: int = 1) -> Generator[bs4.BeautifulSoup, None, None]:
         """
         Yield result pages for a given search term.
 
         :param term: the search term as a str
         :returns: BeautifulSoup4 object representing a result page
         """
-        if len(search_term) < 3:
+        if len(self.search_term) < 3:
             raise ValueError('Your search term must be at least 3 characters long.')
-        print(f"Searching for: '{search_term}'")
-        for page_url in self.next_page_url():
+
+        print(f"Searching for: '{self.search_term}'")
+
+        for page_url in self.next_page_url(start_at):
             r = requests.get(page_url)
             if r.status_code == 200:
-                yield BeautifulSoup(r.text, 'html.parser')
+                publications = self.extract(BeautifulSoup(r.text, 'html.parser'))
+
+                if not publications:
+                    raise NoResults
+                else:
+                    yield publications
 
     @abc.abstractmethod
-    def next_page_url(self) -> Generator[str, None, None]:
+    def next_page_url(self, start_at: int) -> Generator[str, None, None]:
         """Yields the new results page."""
         raise NotImplementedError
 
@@ -146,9 +151,9 @@ class GenLibRusEc(Mirror):
         super().__init__(self.search_url)
         self.search_term = search_term
 
-    def next_page_url(self) -> Generator[str, None, None]:
+    def next_page_url(self, start_at: int) -> Generator[str, None, None]:
         """Yields the new results page."""
-        for pn in itertools.count(1):
+        for pn in itertools.count(start_at):
             yield f"{self.search_url}{self.search_term}&page={str(pn)}"
 
     def extract(self, page):
