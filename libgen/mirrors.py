@@ -68,7 +68,7 @@ class Mirror(ABC):
         """
         Yield result pages for a given search term.
 
-        :param term: the search term as a str
+        :param start_at: results page to start at
         :returns: BeautifulSoup4 object representing a result page
         """
         if len(self.search_term) < 3:
