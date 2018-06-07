@@ -16,6 +16,13 @@ from . import downloaders
 from .exceptions import CouldntFindDownloadUrl, NoResults
 from .publication import Publication
 
+RE_ISBN = re.compile(
+    r"(ISBN[-]*(1[03])*[ ]*(: ){0,1})*" +
+    r"(([0-9Xx][- ]*){13}|([0-9Xx][- ]*){10})"
+)
+
+RE_EDITION = re.compile(r"(\[[0-9] ed\.\])")
+
 
 class Mirror(ABC):
 
@@ -171,17 +178,35 @@ class GenLibRusEc(Mirror):
         return results
 
     def extract_attributes(self, cells) -> Dict[str, Any]:
-        r = re.compile("(.+)(\[(.+)\])?(.*)")
         attrs = {}
         attrs['id'] = cells[0].text
         attrs['authors'] = cells[1].text.strip()
-        t = r.search(cells[2].text.strip())
-        if t is None:
-            attrs['title'] = cells[2].text.strip()
-        else:
-            attrs['title'] = t.group(1).strip()
-            attrs['edition'] = t.group(2)
-            attrs['isbn'] = t.group(3)
+
+        # The 2nd cell contains title information
+        # In best case it will have: Series - Title - Edition - ISBN
+        # But everything except the title is optional
+        # and this optional text shows up in green font
+        for el in cells[2].find_all('font'):
+            et = el.text
+            if RE_ISBN.search(et) is not None:
+                # A list of ISBNs
+                attrs['isbn'] = [
+                    RE_ISBN.search(N).group(0)
+                    for N in et.split(",")
+                    if RE_ISBN.search(N) is not None
+                ]
+            elif RE_EDITION.search(et) is not None:
+                attrs['edition'] = et
+            else:
+                attrs['series'] = et
+
+            # Remove this element from the DOM
+            # so that it isn't considered a part of the title
+            el.extract()
+
+        # Worst case: just fill everything in the title field
+        attrs['title'] = cells[2].text.strip()
+
         attrs['publisher'] = cells[3].text
         attrs['year'] = cells[4].text
         attrs['pages'] = cells[5].text
