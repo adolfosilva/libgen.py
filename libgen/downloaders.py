@@ -21,6 +21,9 @@ class MirrorDownloader(ABC):
         self.url = url
         self.timeout = timeout  # in seconds
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__}: {self.url}>"
+
     def download_publication(self, publication):
         """Downloads a publication from 'self.url'."""
         r = get(self.url, self.timeout)
