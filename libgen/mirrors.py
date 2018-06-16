@@ -16,8 +16,16 @@ from . import downloaders
 from .exceptions import CouldntFindDownloadUrl, NoResults
 from .publication import Publication
 
+RE_ISBN = re.compile(
+    r"(ISBN[-]*(1[03])*[ ]*(: ){0,1})*" +
+    r"(([0-9Xx][- ]*){13}|([0-9Xx][- ]*){10})"
+)
+
+RE_EDITION = re.compile(r"(\[[0-9] ed\.\])")
+
 
 class Mirror(ABC):
+
     def __init__(self, search_url: str) -> None:
         self.search_url = search_url
 
@@ -47,10 +55,7 @@ class Mirror(ABC):
 
     def run(self):
         try:
-            for result_page in self.search(self.search_term):
-                publications = self.extract(result_page)
-                if not publications:
-                    raise NoResults
+            for publications in self.search():
                 selected = self.select(publications)
                 if selected:
                     self.download(selected)
@@ -59,23 +64,30 @@ class Mirror(ABC):
         except NoResults as e:
             print(e)
 
-    def search(self, search_term: str) -> Generator[bs4.BeautifulSoup, None, None]:
+    def search(self, start_at: int = 1) -> Generator[bs4.BeautifulSoup, None, None]:
         """
         Yield result pages for a given search term.
 
-        :param term: the search term as a str
+        :param start_at: results page to start at
         :returns: BeautifulSoup4 object representing a result page
         """
-        if len(search_term) < 3:
+        if len(self.search_term) < 3:
             raise ValueError('Your search term must be at least 3 characters long.')
-        print(f"Searching for: '{search_term}'")
-        for page_url in self.next_page_url():
+
+        print(f"Searching for: '{self.search_term}'")
+
+        for page_url in self.next_page_url(start_at):
             r = requests.get(page_url)
             if r.status_code == 200:
-                yield BeautifulSoup(r.text, 'html.parser')
+                publications = self.extract(BeautifulSoup(r.text, 'html.parser'))
+
+                if not publications:
+                    raise NoResults
+                else:
+                    yield publications
 
     @abc.abstractmethod
-    def next_page_url(self) -> Generator[str, None, None]:
+    def next_page_url(self, start_at: int) -> Generator[str, None, None]:
         """Yields the new results page."""
         raise NotImplementedError
 
@@ -146,9 +158,9 @@ class GenLibRusEc(Mirror):
         super().__init__(self.search_url)
         self.search_term = search_term
 
-    def next_page_url(self) -> Generator[str, None, None]:
+    def next_page_url(self, start_at: int) -> Generator[str, None, None]:
         """Yields the new results page."""
-        for pn in itertools.count(1):
+        for pn in itertools.count(start_at):
             yield f"{self.search_url}{self.search_term}&page={str(pn)}"
 
     def extract(self, page):
@@ -166,17 +178,35 @@ class GenLibRusEc(Mirror):
         return results
 
     def extract_attributes(self, cells) -> Dict[str, Any]:
-        r = re.compile("(.+)(\[(.+)\])?(.*)")
         attrs = {}
         attrs['id'] = cells[0].text
         attrs['authors'] = cells[1].text.strip()
-        t = r.search(cells[2].text.strip())
-        if t is None:
-            attrs['title'] = cells[2].text.strip()
-        else:
-            attrs['title'] = t.group(1).strip()
-            attrs['edition'] = t.group(2)
-            attrs['isbn'] = t.group(3)
+
+        # The 2nd cell contains title information
+        # In best case it will have: Series - Title - Edition - ISBN
+        # But everything except the title is optional
+        # and this optional text shows up in green font
+        for el in cells[2].find_all('font'):
+            et = el.text
+            if RE_ISBN.search(et) is not None:
+                # A list of ISBNs
+                attrs['isbn'] = [
+                    RE_ISBN.search(N).group(0)
+                    for N in et.split(",")
+                    if RE_ISBN.search(N) is not None
+                ]
+            elif RE_EDITION.search(et) is not None:
+                attrs['edition'] = et
+            else:
+                attrs['series'] = et
+
+            # Remove this element from the DOM
+            # so that it isn't considered a part of the title
+            el.extract()
+
+        # Worst case: just fill everything in the title field
+        attrs['title'] = cells[2].text.strip()
+
         attrs['publisher'] = cells[3].text
         attrs['year'] = cells[4].text
         attrs['pages'] = cells[5].text
