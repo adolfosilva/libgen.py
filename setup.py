@@ -20,5 +20,5 @@ setup(
     entry_points={
         'console_scripts': ['libgen=libgen.__main__:main'],
     },
-    install_requires=['beautifulsoup4', 'tabulate', 'requests']
+    install_requires=['beautifulsoup4', 'BeautifulTable', 'requests']
 )

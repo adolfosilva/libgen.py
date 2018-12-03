@@ -3,12 +3,13 @@ import copy
 import itertools
 import re
 import sys
+import os
 from abc import ABC
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import bs4
 import requests
-import tabulate
+from beautifultable import BeautifulTable
 from bs4 import BeautifulSoup
 from requests.exceptions import Timeout
 
@@ -37,7 +38,7 @@ class Mirror(ABC):
 
     @staticmethod
     # @ensure('length of each value list in values is the same has the number of header values', lambda r: all(map(lambda x: len(x) == len(r[0]), r[1])))
-    def get_headers_values(publications: List[Publication]) -> Tuple[List[str], List[List[Any]]]:
+    def get_headers_values(publications: List[Publication]) -> Tuple[List[str], List[dict]]:
         # headers should not include 'mirrors'
         headers = set()
         values = []
@@ -50,7 +51,7 @@ class Mirror(ABC):
             attrs = copy.deepcopy(p.attributes)
             attrs.pop('mirrors', None)
             headers.update(set(attrs))  # set of keys from attrs
-            values.append(list(attrs.values()))
+            values.append(attrs)
         return (list(headers), values)
 
     def run(self):
@@ -107,8 +108,52 @@ class Mirror(ABC):
         :param publications: list of Publication
         :returns: a Publication
         """
-        headers, values = Mirror.get_headers_values(publications)
-        print(tabulate.tabulate(values, headers, 'fancy_grid'))
+
+        preferred_order = [
+            'id', 'title', 'authors', 'pages', 'extension', 'size', 'series',
+            'publisher', 'lang', 'isbn'
+        ]
+
+        unsorted_headers, rows = Mirror.get_headers_values(publications)
+        # sort the headers by preferred order
+        sorted_headers = []
+        for header in preferred_order:
+            if header in unsorted_headers:
+                sorted_headers.append(header)
+                unsorted_headers.remove(header)
+        # alphabetize the rest
+        sorted_headers += sorted(unsorted_headers)
+
+        term_c, term_r = os.get_terminal_size(0)
+        table = BeautifulTable(
+            default_alignment=BeautifulTable.ALIGN_LEFT,
+            max_width=term_c - 1
+        )
+        table.column_headers = sorted_headers
+        table.left_border_char = ''
+        table.right_border_char = ''
+        table.top_border_char = '━'
+        table.bottom_border_char = ' '
+        table.header_separator_char = '━'
+        table.row_separator_char = '─'
+        table.intersection_char = '┼'
+        table.column_separator_char = '│'
+
+        # build a table using order of sorted_headers and blank out missing data
+        for row in rows:
+            expanded_row = []
+            for key in sorted_headers:
+                if key in row.keys():
+                    if type(row[key]) is list:
+                        expanded_row.append(','.join(row[key]))
+                    else:
+                        expanded_row.append(row[key])
+                else:
+                    expanded_row.append('')
+            table.append_row(expanded_row)
+
+        print(table)
+
         while True:
             try:
                 choice = input('Choose publication by ID: ')
