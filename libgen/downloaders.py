@@ -96,11 +96,15 @@ def get(url: str, timeout: int, stream: bool = False):
     """
     return requests.get(url, stream=stream, timeout=timeout)
 
+def filter_filename(filename: str):
+    """Filters a filename non alphabetic and non delimiters charaters."""
+    valid_chars = '-_.() '
+    return ''.join(c for c in filename if c.isalnum() or c in valid_chars)
+
 
 def save_file(filename: str, data: requests.models.Response):
     """Saves a file to the current directory."""
-    valid_chars = '-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    filename = ''.join(c for c in filename if c in valid_chars)
+    filename = filter_filename(filename)
     try:
         with open(filename, 'wb') as f:
             for chunk in data.iter_content(chunk_size=1024):
