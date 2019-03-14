@@ -1,4 +1,4 @@
 beautifulsoup4==4.6.0
-tabulate==0.8.2
+beautifultable==0.5.3
 requests==2.20
 lxml==4.2.5
