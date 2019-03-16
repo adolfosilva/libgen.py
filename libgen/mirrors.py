@@ -54,10 +54,14 @@ class Mirror(ABC):
             values.append(attrs)
         return (list(headers), values)
 
-    def run(self):
+    def run(self, non_interactive=False):
         try:
             for publications in self.search():
-                selected = self.select(publications)
+                if non_interactive:
+                    selected = publications[0]
+                else:
+                    selected = self.select(publications)
+
                 if selected:
                     self.download(selected)
                     # TODO: 'Downloaded X MB in Y seconds.'
