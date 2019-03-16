@@ -18,3 +18,11 @@ def test_mirror_interactive_run(mock_save_file):
             GenLibRusEc("Stephen Siklos Advanced Problems in Mathematics: Preparing for University").run()
 
     assert mock_save_file.called
+
+@my_vcr.use_cassette("tests/fixtures/cassettes/test_mirror_interactive_run")
+@unittest.mock.patch('libgen.downloaders.save_file')
+def test_mirror_non_interactive_run(mock_save_file):
+    # http://www.oapen.org/search?identifier=633792;keyword=mathematics
+    GenLibRusEc("Stephen Siklos Advanced Problems in Mathematics: Preparing for University").run(non_interactive=True)
+
+    assert mock_save_file.called
