@@ -1,4 +1,12 @@
 from setuptools import setup
+install_deps=['beautifulsoup4', 'BeautifulTable', 'requests']
+test_deps = [
+    'vcrpy',
+    'pytest',
+]
+extras = {
+    'test': test_deps,
+}
 
 setup(
     name='libgen.py',
@@ -14,11 +22,12 @@ setup(
     keywords='libgen',
     packages=['libgen'],
     include_package_data=True,  # include files listed in MANIFEST.in
-    tests_requires=['pytest', 'vcrpy'],
+    tests_require=test_deps,
     py_modules=['libgen'],
     python_requires='~=3.5',
     entry_points={
         'console_scripts': ['libgen=libgen.__main__:main'],
     },
-    install_requires=['beautifulsoup4', 'BeautifulTable', 'requests']
+    install_requires=install_deps,
+    extras_require=extras,
 )
