@@ -28,7 +28,7 @@ Usage
       -s SEARCH, --search SEARCH
                             search term
       -n, --non-interactive
-                            non interactive mode, return first available choice
+                            non interactive mode, download first available choice
 
 
 Dependencies
