@@ -19,7 +19,7 @@ Usage
 .. code:: shell
 
     $ libgen -h
-    usage: libgen [-h] -s SEARCH [-y YEAR] [-t EXTENSION]
+    usage: libgen [-h] -s SEARCH [-n]
 
     Read more, kids.
 
@@ -27,6 +27,9 @@ Usage
       -h, --help            show this help message and exit
       -s SEARCH, --search SEARCH
                             search term
+      -n, --non-interactive
+                            non interactive mode, return first available choice
+
 
 Dependencies
 ~~~~~~~~~~~~
