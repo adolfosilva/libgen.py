@@ -14,7 +14,7 @@ setup(
     keywords='libgen',
     packages=['libgen'],
     include_package_data=True,  # include files listed in MANIFEST.in
-    tests_requires=['pytest'],
+    tests_requires=['pytest', 'vcr'],
     py_modules=['libgen'],
     python_requires='~=3.5',
     entry_points={
