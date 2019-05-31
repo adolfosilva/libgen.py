@@ -67,6 +67,8 @@ class Mirror(ABC):
                     # TODO: 'Downloaded X MB in Y seconds.'
                     break
         except NoResults as e:
+            if non_interactive:
+                sys.exit(1)
             print(e)
 
     def search(self, start_at: int = 1) -> Generator[bs4.BeautifulSoup, None, None]:
